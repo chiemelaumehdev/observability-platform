@@ -6,17 +6,12 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.70"
     }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.33"
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "~> 2.16"
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
     }
   }
 
-  # Backend values are supplied via -backend-config=backend.hcl.
   backend "s3" {}
 }
 
@@ -36,25 +31,60 @@ provider "aws" {
 }
 
 data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
 
 locals {
-  account_id = data.aws_caller_identity.current.account_id
-  region     = data.aws_region.current.name
+  account_id   = data.aws_caller_identity.current.account_id
+  region       = var.region
+  name_prefix  = "observability"
+  cluster_name = "${local.name_prefix}-eks"
 
-  name_prefix = "observability"
-  domain      = var.domain
+  azs = ["${var.region}a", "${var.region}b", "${var.region}c"]
+
+  private_subnets = ["10.100.0.0/19", "10.100.32.0/19", "10.100.64.0/19"]
+  public_subnets  = ["10.100.96.0/20", "10.100.112.0/20", "10.100.128.0/20"]
 }
 
-# -----------------------------------------------------------------------------
-# Phase 2 modules are added here as they come online.
-#
-#   module "vpc"           { source = "../../modules/vpc" ...           }
-#   module "s3_storage"    { source = "../../modules/s3-storage" ...    }
-#   module "ecr"           { source = "../../modules/ecr" ...           }
-#   module "rds_grafana"   { source = "../../modules/rds-grafana" ...   }
-#   module "eks"           { source = "../../modules/eks" ...           }
-#   module "iam_irsa"      { source = "../../modules/iam-irsa" ...      }
-#
-# Each module is independently initialized and planned.
-# -----------------------------------------------------------------------------
+module "vpc" {
+  source = "../../modules/vpc"
+
+  name            = "${local.name_prefix}-vpc"
+  cidr            = var.vpc_cidr
+  region          = local.region
+  azs             = local.azs
+  private_subnets = local.private_subnets
+  public_subnets  = local.public_subnets
+}
+
+module "s3_storage" {
+  source = "../../modules/s3-storage"
+
+  name_prefix = local.name_prefix
+  account_id  = local.account_id
+  region      = local.region
+}
+
+module "ecr" {
+  source = "../../modules/ecr"
+
+  name = "observability-app"
+}
+
+module "eks" {
+  source = "../../modules/eks"
+
+  cluster_name       = local.cluster_name
+  cluster_version    = var.eks_version
+  vpc_id             = module.vpc.vpc_id
+  subnet_ids         = module.vpc.private_subnet_ids
+  node_instance_type = var.eks_node_instance_type
+  node_desired_size  = var.eks_node_desired_size
+}
+
+module "rds_grafana" {
+  source = "../../modules/rds-grafana"
+
+  name                       = local.name_prefix
+  vpc_id                     = module.vpc.vpc_id
+  subnet_ids                 = module.vpc.private_subnet_ids
+  allowed_security_group_ids = [module.eks.node_security_group_id]
+}
