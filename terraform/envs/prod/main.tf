@@ -87,3 +87,17 @@ module "rds_grafana" {
   subnet_ids                 = module.vpc.private_subnet_ids
   allowed_security_group_ids = [module.eks.node_security_group_id]
 }
+
+module "iam_irsa" {
+  source = "../../modules/iam-irsa"
+
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_provider_url = module.eks.cluster_oidc_issuer_url
+
+  tempo_bucket_arn  = module.s3_storage.bucket_arns["tempo"]
+  tempo_kms_key_arn = module.s3_storage.kms_key_arns["tempo"]
+  mimir_bucket_arn  = module.s3_storage.bucket_arns["mimir"]
+  mimir_kms_key_arn = module.s3_storage.kms_key_arns["mimir"]
+  loki_bucket_arn   = module.s3_storage.bucket_arns["loki"]
+  loki_kms_key_arn  = module.s3_storage.kms_key_arns["loki"]
+}

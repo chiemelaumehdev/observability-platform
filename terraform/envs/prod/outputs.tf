@@ -55,5 +55,13 @@ output "grafana_db_credentials_secret_arn" {
 }
 
 output "kubeconfig_command" {
-  value = "aws eks update-kubeconfig --name ${module.eks.cluster_name} --region ${var.region} --profile ${var.aws_profile} --alias observability"
+  value = "aws eks update-kubeconfig --name ${module.eks.cluster_name} --region ${var.region} --alias observability"
+}
+
+output "irsa_role_arns" {
+  value = module.iam_irsa.role_arns
+}
+
+output "s3_bucket_arns" {
+  value = module.s3_storage.bucket_arns
 }

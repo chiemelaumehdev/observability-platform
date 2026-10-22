@@ -1,0 +1,60 @@
+tempo:
+  repository: grafana/tempo
+  tag: 2.6.0
+
+  reportingEnabled: false
+
+  retention: 72h
+
+  storage:
+    trace:
+      backend: s3
+      s3:
+        bucket: observability-tempo-blocks-445817183428-us-east-1
+        endpoint: s3.us-east-1.amazonaws.com
+        region: us-east-1
+        insecure: false
+        sse:
+          type: SSE-KMS
+          kms_key_id: alias/observability-tempo
+
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+  ingester:
+    trace_idle_period: 10s
+    max_block_duration: 5m
+
+  compactor:
+    compaction:
+      block_retention: 72h
+
+serviceAccount:
+  create: true
+  name: tempo
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::445817183428:role/observability-tempo-irsa
+
+persistence:
+  enabled: true
+  size: 10Gi
+  storageClassName: gp2
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+tempoQuery:
+  enabled: false
+
+service:
+  type: ClusterIP

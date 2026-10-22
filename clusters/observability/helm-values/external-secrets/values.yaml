@@ -1,0 +1,37 @@
+installCRDs: true
+
+replicaCount: 1
+
+serviceAccount:
+  create: true
+  name: external-secrets
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::445817183428:role/observability-external-secrets-irsa
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
+  limits:
+    cpu: 100m
+    memory: 256Mi
+
+webhook:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+certController:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi

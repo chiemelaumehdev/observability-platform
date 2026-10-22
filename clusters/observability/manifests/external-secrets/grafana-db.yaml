@@ -1,0 +1,30 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: grafana-db
+  namespace: observability
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: aws-secretsmanager
+    kind: ClusterSecretStore
+  target:
+    name: grafana-db
+    creationPolicy: Owner
+  data:
+    - secretKey: GF_DATABASE_HOST
+      remoteRef:
+        key: observability-db-credentials-I5C3DY
+        property: host
+    - secretKey: GF_DATABASE_NAME
+      remoteRef:
+        key: observability-db-credentials-I5C3DY
+        property: dbname
+    - secretKey: GF_DATABASE_USER
+      remoteRef:
+        key: observability-db-credentials-I5C3DY
+        property: username
+    - secretKey: GF_DATABASE_PASSWORD
+      remoteRef:
+        key: observability-db-credentials-I5C3DY
+        property: password
