@@ -70,7 +70,6 @@ config:
       dimensions:
         - name: http.method
         - name: http.status_code
-        - name: service.name
       metrics_flush_interval: 15s
 
   exporters:
