@@ -14,9 +14,6 @@ tempo:
         endpoint: s3.us-east-1.amazonaws.com
         region: us-east-1
         insecure: false
-        sse:
-          type: SSE-KMS
-          kms_key_id: alias/observability-tempo
 
   receivers:
     otlp:
