@@ -151,11 +151,10 @@ resource "aws_ecs_task_definition" "this" {
       name      = "adot"
       image     = "public.ecr.aws/aws-observability/aws-otel-collector:v0.41.1"
       essential = true
-      command   = ["--config", "/etc/adot/config.yaml"]
+      command   = ["--config=env:AOT_CONFIG_CONTENT"]
       environment = [
         { name = "AOT_CONFIG_CONTENT", value = local.adot_config }
       ]
-      entryPoint = ["/bin/sh", "-c", "mkdir -p /etc/adot && echo \"$AOT_CONFIG_CONTENT\" > /etc/adot/config.yaml && exec /awscollector --config /etc/adot/config.yaml"]
       logConfiguration = {
         logDriver = "awslogs"
         options = {
