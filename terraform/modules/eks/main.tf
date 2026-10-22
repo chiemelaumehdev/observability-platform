@@ -31,9 +31,12 @@ module "eks" {
 
   eks_managed_node_groups = {
     default = {
-      name           = "${var.cluster_name}-ng-default"
-      instance_types = [var.node_instance_type]
-      capacity_type  = "ON_DEMAND"
+      name                       = "obs-ng-default"
+      use_name_prefix            = false
+      iam_role_name              = "obs-eks-node-role"
+      iam_role_use_name_prefix   = false
+      instance_types             = [var.node_instance_type]
+      capacity_type              = "ON_DEMAND"
 
       min_size     = 1
       max_size     = 6
