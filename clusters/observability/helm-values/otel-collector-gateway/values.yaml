@@ -1,0 +1,108 @@
+mode: deployment
+replicaCount: 2
+
+image:
+  repository: otel/opentelemetry-collector-contrib
+
+serviceAccount:
+  create: true
+  name: otel-collector-gateway
+
+presets:
+  logsCollection:
+    enabled: false
+  kubernetesAttributes:
+    enabled: false
+
+ports:
+  otlp:
+    enabled: true
+    containerPort: 4317
+    servicePort: 4317
+    protocol: TCP
+  otlp-http:
+    enabled: true
+    containerPort: 4318
+    servicePort: 4318
+    protocol: TCP
+  metrics:
+    enabled: true
+    containerPort: 8888
+    servicePort: 8888
+    protocol: TCP
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+config:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+  processors:
+    batch:
+      timeout: 1s
+      send_batch_size: 1024
+    memory_limiter:
+      check_interval: 1s
+      limit_mib: 400
+      spike_limit_mib: 100
+    resource:
+      attributes:
+        - key: cluster.name
+          value: observability-eks
+          action: upsert
+
+  connectors:
+    spanmetrics:
+      histogram:
+        explicit:
+          buckets: [10ms, 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s]
+      dimensions:
+        - name: http.method
+        - name: http.status_code
+        - name: service.name
+      metrics_flush_interval: 15s
+
+  exporters:
+    debug:
+      verbosity: basic
+    otlp/tempo:
+      endpoint: tempo:4317
+      tls:
+        insecure: true
+    otlphttp/loki:
+      endpoint: http://loki-gateway/otlp
+      tls:
+        insecure: true
+    prometheusremotewrite/mimir:
+      endpoint: http://mimir-nginx/api/v1/push
+      tls:
+        insecure: true
+
+  service:
+    pipelines:
+      traces:
+        receivers: [otlp]
+        processors: [memory_limiter, resource, batch]
+        exporters: [debug, otlp/tempo, spanmetrics]
+      metrics:
+        receivers: [otlp, spanmetrics]
+        processors: [memory_limiter, resource, batch]
+        exporters: [prometheusremotewrite/mimir]
+      logs:
+        receivers: [otlp]
+        processors: [memory_limiter, resource, batch]
+        exporters: [otlphttp/loki]
+    telemetry:
+      logs:
+        level: info

@@ -1,0 +1,138 @@
+metaMonitoring:
+  dashboards:
+    enabled: false
+  serviceMonitor:
+    enabled: false
+
+serviceAccount:
+  create: true
+  name: mimir
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::445817183428:role/observability-mimir-irsa
+
+mimir:
+  structuredConfig:
+    common:
+      storage:
+        backend: s3
+        s3:
+          bucket_name: observability-mimir-blocks-445817183428-us-east-1
+          region: us-east-1
+          endpoint: s3.us-east-1.amazonaws.com
+    blocks_storage:
+      backend: s3
+      s3:
+        bucket_name: observability-mimir-blocks-445817183428-us-east-1
+        region: us-east-1
+        endpoint: s3.us-east-1.amazonaws.com
+    alertmanager_storage:
+      backend: s3
+      s3:
+        bucket_name: observability-mimir-blocks-445817183428-us-east-1
+        region: us-east-1
+        endpoint: s3.us-east-1.amazonaws.com
+    ruler_storage:
+      backend: s3
+      s3:
+        bucket_name: observability-mimir-blocks-445817183428-us-east-1
+        region: us-east-1
+        endpoint: s3.us-east-1.amazonaws.com
+    limits:
+      ingestion_rate: 100000
+      ingestion_burst_size: 200000
+      max_global_series_per_user: 1000000
+
+alertmanager:
+  enabled: false
+
+minio:
+  enabled: false
+
+nginx:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+compactor:
+  replicas: 1
+  persistentVolume:
+    size: 2Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+distributor:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+ingester:
+  replicas: 1
+  zoneAwareReplication:
+    enabled: false
+  persistentVolume:
+    size: 2Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+querier:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+query_frontend:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+store_gateway:
+  replicas: 1
+  zoneAwareReplication:
+    enabled: false
+  persistentVolume:
+    size: 2Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+ruler:
+  enabled: false
+
+overrides_exporter:
+  enabled: false
+
+rollout_operator:
+  enabled: false

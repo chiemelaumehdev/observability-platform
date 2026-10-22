@@ -52,9 +52,41 @@ datasources:
         uid: tempo
         access: proxy
         url: http://tempo:3100
-        isDefault: true
         jsonData:
           httpMethod: GET
+          tracesToLogsV2:
+            datasourceUid: loki
+            spanStartTimeShift: "-1h"
+            spanEndTimeShift: "1h"
+            filterByTraceID: true
+          tracesToMetrics:
+            datasourceUid: mimir
+            spanStartTimeShift: "-1h"
+            spanEndTimeShift: "1h"
+          serviceMap:
+            datasourceUid: mimir
+      - name: Mimir
+        type: prometheus
+        uid: mimir
+        access: proxy
+        url: http://mimir-nginx/prometheus
+        isDefault: true
+        jsonData:
+          httpMethod: POST
+          exemplarTraceIdDestinations:
+            - name: traceID
+              datasourceUid: tempo
+      - name: Loki
+        type: loki
+        uid: loki
+        access: proxy
+        url: http://loki-gateway
+        jsonData:
+          derivedFields:
+            - name: TraceID
+              matcherRegex: 'trace_id=(\w+)'
+              datasourceUid: tempo
+              url: '$${__value.raw}'
 
 persistence:
   enabled: false
