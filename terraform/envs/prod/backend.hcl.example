@@ -1,0 +1,10 @@
+# Copy to backend.hcl and fill in. backend.hcl is gitignored.
+# The state bucket and DynamoDB lock table are provisioned manually
+# once (bootstrap) and then shared across all environments.
+
+bucket         = "observability-tfstate-<account-id>-us-east-1"
+key            = "envs/prod/terraform.tfstate"
+region         = "us-east-1"
+profile        = "observability"
+dynamodb_table = "observability-tfstate-lock"
+encrypt        = true
