@@ -101,3 +101,31 @@ module "iam_irsa" {
   loki_bucket_arn   = module.s3_storage.bucket_arns["loki"]
   loki_kms_key_arn  = module.s3_storage.kms_key_arns["loki"]
 }
+
+module "ecs_observability_app" {
+  source = "../../modules/ecs-tenant-service"
+
+  cluster_name       = "observability-ecs"
+  service_name       = "observability-app"
+  app_image          = "${module.ecr.repository_url}:latest"
+  collector_endpoint = "${var.collector_nlb_endpoint}:4317"
+  region             = var.region
+  environment        = var.env
+  vpc_id             = module.vpc.vpc_id
+  vpc_cidr           = var.vpc_cidr
+  subnet_ids         = module.vpc.private_subnet_ids
+  desired_count      = 1
+}
+
+module "github_actions_oidc" {
+  source = "../../modules/github-actions-oidc"
+
+  repositories = [
+    {
+      repo     = "chiemelaumehdev/observability-app"
+      branches = ["main"]
+    },
+  ]
+
+  ecr_repository_arns = [module.ecr.repository_arn]
+}

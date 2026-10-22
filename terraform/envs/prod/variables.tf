@@ -51,3 +51,8 @@ variable "eks_node_desired_size" {
   type        = number
   default     = 3
 }
+
+variable "collector_nlb_endpoint" {
+  description = "Internal NLB hostname fronting the OTel Collector Gateway. ECS tasks forward OTLP here."
+  type        = string
+}

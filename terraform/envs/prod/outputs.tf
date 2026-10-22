@@ -65,3 +65,19 @@ output "irsa_role_arns" {
 output "s3_bucket_arns" {
   value = module.s3_storage.bucket_arns
 }
+
+output "ecs_cluster_name" {
+  value = module.ecs_observability_app.cluster_name
+}
+
+output "ecs_service_name" {
+  value = module.ecs_observability_app.service_name
+}
+
+output "ecs_log_group" {
+  value = module.ecs_observability_app.log_group_name
+}
+
+output "github_actions_role_arns" {
+  value = module.github_actions_oidc.role_arns
+}
