@@ -101,9 +101,8 @@ config:
       timeout: 30s
       tls:
         insecure: true
-      sending_queue:
+      remote_write_queue:
         enabled: true
-        num_consumers: 2
         queue_size: 5000
       retry_on_failure:
         enabled: true
