@@ -1,0 +1,17 @@
+watchAnyNamespace: false
+watchNamespaces:
+  - kafka
+
+replicas: 1
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+featureGates: "+KafkaNodePools,+UnidirectionalTopicOperator,+UseKRaft"
+
+logLevel: INFO

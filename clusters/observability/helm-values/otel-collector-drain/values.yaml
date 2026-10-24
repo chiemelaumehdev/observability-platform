@@ -1,0 +1,100 @@
+mode: deployment
+replicaCount: 1
+
+image:
+  repository: otel/opentelemetry-collector-contrib
+
+serviceAccount:
+  create: true
+  name: otel-collector-drain
+
+presets:
+  logsCollection:
+    enabled: false
+
+ports:
+  otlp:
+    enabled: false
+  otlp-http:
+    enabled: false
+  jaeger-compact:
+    enabled: false
+  jaeger-thrift:
+    enabled: false
+  jaeger-grpc:
+    enabled: false
+  zipkin:
+    enabled: false
+
+service:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 300m
+    memory: 384Mi
+
+config:
+  receivers:
+    kafka/traces:
+      brokers:
+        - kafka-kafka-bootstrap.kafka.svc.cluster.local:9092
+      topic: otel.traces
+      encoding: otlp_proto
+      group_id: otel-drain-traces
+    kafka/metrics:
+      brokers:
+        - kafka-kafka-bootstrap.kafka.svc.cluster.local:9092
+      topic: otel.metrics
+      encoding: otlp_proto
+      group_id: otel-drain-metrics
+    kafka/logs:
+      brokers:
+        - kafka-kafka-bootstrap.kafka.svc.cluster.local:9092
+      topic: otel.logs
+      encoding: otlp_proto
+      group_id: otel-drain-logs
+
+  processors:
+    memory_limiter:
+      check_interval: 1s
+      limit_mib: 300
+      spike_limit_mib: 100
+    batch:
+      timeout: 1s
+      send_batch_size: 1024
+
+  exporters:
+    otlp/tempo:
+      endpoint: tempo:4317
+      tls:
+        insecure: true
+    prometheusremotewrite/mimir:
+      endpoint: http://mimir-nginx/api/v1/push
+      tls:
+        insecure: true
+    otlphttp/loki:
+      endpoint: http://loki-gateway/otlp
+      tls:
+        insecure: true
+
+  service:
+    pipelines:
+      traces/drain:
+        receivers:  [kafka/traces]
+        processors: [memory_limiter, batch]
+        exporters:  [otlp/tempo]
+      metrics/drain:
+        receivers:  [kafka/metrics]
+        processors: [memory_limiter, batch]
+        exporters:  [prometheusremotewrite/mimir]
+      logs/drain:
+        receivers:  [kafka/logs]
+        processors: [memory_limiter, batch]
+        exporters:  [otlphttp/loki]
+    telemetry:
+      logs:
+        level: info

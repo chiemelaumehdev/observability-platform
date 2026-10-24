@@ -76,6 +76,18 @@ config:
         - key: cluster.name
           value: observability-eks
           action: upsert
+    attributes/redact:
+      actions:
+        - key: http.request.body
+          action: delete
+        - key: http.request.body.content
+          action: delete
+        - key: db.statement
+          action: delete
+        - key: user.email
+          action: hash
+        - key: enduser.id
+          action: hash
 
   connectors:
     spanmetrics:
@@ -102,21 +114,36 @@ config:
       endpoint: http://mimir-nginx/api/v1/push
       tls:
         insecure: true
+    kafka/traces:
+      brokers:
+        - kafka-kafka-bootstrap.kafka.svc.cluster.local:9092
+      topic: otel.traces
+      encoding: otlp_proto
+    kafka/metrics:
+      brokers:
+        - kafka-kafka-bootstrap.kafka.svc.cluster.local:9092
+      topic: otel.metrics
+      encoding: otlp_proto
+    kafka/logs:
+      brokers:
+        - kafka-kafka-bootstrap.kafka.svc.cluster.local:9092
+      topic: otel.logs
+      encoding: otlp_proto
 
   service:
     pipelines:
       traces:
         receivers: [otlp]
-        processors: [memory_limiter, resource, batch]
-        exporters: [debug, otlp/tempo, spanmetrics]
+        processors: [memory_limiter, resource, attributes/redact, batch]
+        exporters: [debug, otlp/tempo, spanmetrics, kafka/traces]
       metrics:
         receivers: [otlp, spanmetrics]
         processors: [memory_limiter, resource, batch]
-        exporters: [prometheusremotewrite/mimir]
+        exporters: [prometheusremotewrite/mimir, kafka/metrics]
       logs:
         receivers: [otlp]
-        processors: [memory_limiter, resource, batch]
-        exporters: [otlphttp/loki]
+        processors: [memory_limiter, resource, attributes/redact, batch]
+        exporters: [otlphttp/loki, kafka/logs]
     telemetry:
       logs:
         level: info
