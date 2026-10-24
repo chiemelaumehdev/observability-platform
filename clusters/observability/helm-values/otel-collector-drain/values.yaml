@@ -45,18 +45,33 @@ config:
       topic: otel.traces
       encoding: otlp_proto
       group_id: otel-drain-traces
+      autocommit:
+        enable: false
+      message_marking:
+        after: true
+        on_error: false
     kafka/metrics:
       brokers:
         - kafka-kafka-bootstrap.kafka.svc.cluster.local:9092
       topic: otel.metrics
       encoding: otlp_proto
       group_id: otel-drain-metrics
+      autocommit:
+        enable: false
+      message_marking:
+        after: true
+        on_error: false
     kafka/logs:
       brokers:
         - kafka-kafka-bootstrap.kafka.svc.cluster.local:9092
       topic: otel.logs
       encoding: otlp_proto
       group_id: otel-drain-logs
+      autocommit:
+        enable: false
+      message_marking:
+        after: true
+        on_error: false
 
   processors:
     memory_limiter:
@@ -72,14 +87,43 @@ config:
       endpoint: tempo:4317
       tls:
         insecure: true
+      sending_queue:
+        enabled: true
+        num_consumers: 2
+        queue_size: 5000
+      retry_on_failure:
+        enabled: true
+        initial_interval: 2s
+        max_interval: 30s
+        max_elapsed_time: 300s
     prometheusremotewrite/mimir:
       endpoint: http://mimir-nginx/api/v1/push
+      timeout: 30s
       tls:
         insecure: true
+      sending_queue:
+        enabled: true
+        num_consumers: 2
+        queue_size: 5000
+      retry_on_failure:
+        enabled: true
+        initial_interval: 2s
+        max_interval: 30s
+        max_elapsed_time: 300s
     otlphttp/loki:
       endpoint: http://loki-gateway/otlp
+      timeout: 30s
       tls:
         insecure: true
+      sending_queue:
+        enabled: true
+        num_consumers: 2
+        queue_size: 5000
+      retry_on_failure:
+        enabled: true
+        initial_interval: 2s
+        max_interval: 30s
+        max_elapsed_time: 300s
 
   service:
     pipelines:
