@@ -93,3 +93,6 @@ monitoring:
       installOperator: false
   lokiCanary:
     enabled: false
+
+lokiCanary:
+  enabled: false
