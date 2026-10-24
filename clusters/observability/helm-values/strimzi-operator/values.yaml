@@ -12,6 +12,6 @@ resources:
     cpu: 500m
     memory: 512Mi
 
-featureGates: "+KafkaNodePools,+UnidirectionalTopicOperator,+UseKRaft"
+featureGates: ""
 
 logLevel: INFO
