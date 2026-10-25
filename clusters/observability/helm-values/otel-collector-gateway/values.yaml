@@ -91,12 +91,33 @@ config:
 
   connectors:
     spanmetrics:
+      # Finer bucket set for quantile precision. Default OTel buckets are
+      # too sparse at the tail; a P99 of "9500ms" could be anywhere from
+      # 5s to 10s under the old [10ms, 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s].
       histogram:
         explicit:
-          buckets: [10ms, 50ms, 100ms, 250ms, 500ms, 1s, 2s, 5s]
+          buckets:
+            [1ms, 5ms, 10ms, 25ms, 50ms, 75ms, 100ms, 250ms, 500ms, 750ms,
+             1s, 1500ms, 2s, 2500ms, 5s, 7500ms, 10s, 15s, 30s]
+      # Promote span + resource attributes to metric labels so prod
+      # dashboards can slice by them. Each entry becomes a label on
+      # traces_span_metrics_calls_total / _duration_milliseconds_*.
+      # Keep this list tight — every added dimension multiplies cardinality.
       dimensions:
-        - name: http.method
-        - name: http.status_code
+        # HTTP semantics (semconv v1.26 names, which is what otelhttp emits).
+        - name: http.request.method
+        - name: http.response.status_code
+        - name: http.route
+        # Resource attributes propagated from the SDK Resource. These are
+        # the dashboard variable surface: $env, $version, $cluster.
+        - name: deployment.environment.name
+        - name: service.version
+        - name: cluster.name
+      # Attach the trace ID as an exemplar on every histogram bucket.
+      # Required for the "click a slow point → jump to the trace" flow
+      # on latency panels in Grafana.
+      exemplars:
+        enabled: true
       metrics_flush_interval: 15s
 
   exporters:
