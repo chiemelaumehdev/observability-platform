@@ -100,13 +100,33 @@ resources:
     memory: 512Mi
 
 service:
-  type: LoadBalancer
+  type: ClusterIP
   port: 80
   targetPort: 3000
+
+# Fronted by an AWS ALB managed by the AWS Load Balancer Controller.
+# ALB is the right choice over NLB for a browser-facing UI because it:
+#   - terminates HTTPS natively (ACM cert on a listener)
+#   - redirects HTTP->HTTPS as a listener rule
+#   - supports path/host-based routing (one ALB -> many services later)
+#   - integrates with WAF for OWASP protection
+#   - writes access logs with full HTTP context (method, path, UA)
+# NLB only wins for raw TCP/UDP or extreme throughput, neither of
+# which Grafana needs.
+ingress:
+  enabled: true
+  ingressClassName: alb
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: nlb
-    service.beta.kubernetes.io/aws-load-balancer-scheme: internal
-    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+    alb.ingress.kubernetes.io/healthcheck-path: /api/health
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+    alb.ingress.kubernetes.io/healthcheck-port: traffic-port
+    alb.ingress.kubernetes.io/success-codes: "200"
+    alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=60
+  path: /
+  pathType: Prefix
 
 serviceAccount:
   create: true

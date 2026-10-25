@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aws-load-balancer-controller
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: observability
+  sources:
+    - chart: aws-load-balancer-controller
+      repoURL: https://aws.github.io/eks-charts
+      targetRevision: 1.9.2
+      helm:
+        releaseName: aws-load-balancer-controller
+        valueFiles:
+          - $values/clusters/observability/helm-values/aws-load-balancer-controller/values.yaml
+    - repoURL: https://github.com/chiemelaumehdev/observability-platform.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true
+      - CreateNamespace=true

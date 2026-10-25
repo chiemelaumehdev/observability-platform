@@ -1,0 +1,31 @@
+clusterName: observability-eks
+region: us-east-1
+vpcId: ""
+
+serviceAccount:
+  create: true
+  name: aws-load-balancer-controller
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::445817183428:role/observability-alb-controller-irsa
+
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+# Create the ALB IngressClass as the default so Ingress objects without
+# an explicit ingressClassName pick it up.
+ingressClass: alb
+createIngressClassResource: true
+ingressClassParams:
+  create: true
+  spec:
+    group:
+      name: ""
+
+enableServiceMutatorWebhook: false
