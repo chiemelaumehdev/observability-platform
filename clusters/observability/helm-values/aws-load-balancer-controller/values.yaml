@@ -28,3 +28,9 @@ ingressClassParams:
   spec: {}
 
 enableServiceMutatorWebhook: false
+
+# Use cert-manager (already installed) to issue + rotate the webhook
+# TLS cert. Default is a self-signed CA that the kube-apiserver rejects
+# with "certificate signed by unknown authority" when calling the mutate
+# and validate webhooks on TargetGroupBinding / Ingress.
+enableCertManager: true
