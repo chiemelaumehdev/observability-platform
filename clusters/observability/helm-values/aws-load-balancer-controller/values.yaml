@@ -18,14 +18,13 @@ resources:
     cpu: 500m
     memory: 256Mi
 
-# Create the ALB IngressClass as the default so Ingress objects without
-# an explicit ingressClassName pick it up.
+# Create the ALB IngressClass. No ingress group — each Ingress gets its
+# own ALB. Later, if multiple services share one ALB, give them matching
+# alb.ingress.kubernetes.io/group.name annotations instead.
 ingressClass: alb
 createIngressClassResource: true
 ingressClassParams:
   create: true
-  spec:
-    group:
-      name: ""
+  spec: {}
 
 enableServiceMutatorWebhook: false

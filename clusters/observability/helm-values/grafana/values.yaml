@@ -125,6 +125,10 @@ ingress:
     alb.ingress.kubernetes.io/healthcheck-port: traffic-port
     alb.ingress.kubernetes.io/success-codes: "200"
     alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=60
+  # No hosts: the ALB catches any Host header. The chart's default
+  # chart-example.local placeholder would prevent the browser (hitting
+  # the ALB's auto-generated DNS name) from ever matching a rule.
+  hosts: []
   path: /
   pathType: Prefix
 
