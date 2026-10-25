@@ -104,10 +104,16 @@ config:
       # traces_span_metrics_calls_total / _duration_milliseconds_*.
       # Keep this list tight — every added dimension multiplies cardinality.
       dimensions:
-        # HTTP semantics (semconv v1.26 names, which is what otelhttp emits).
+        # HTTP semantics - carry BOTH the v1.26+ names (new app) and the
+        # v1.19 names (current running app). The otelhttp instrumentation
+        # version determines which pair actually gets emitted on the span;
+        # listing both keeps the metric labels working across the rolling
+        # upgrade without the dashboard needing to flip filters.
         - name: http.request.method
         - name: http.response.status_code
         - name: http.route
+        - name: http.method
+        - name: http.status_code
         # Resource attributes propagated from the SDK Resource. These are
         # the dashboard variable surface: $env, $version, $cluster.
         - name: deployment.environment.name
